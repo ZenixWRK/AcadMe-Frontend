@@ -65,8 +65,8 @@ export default function Page() {
     }
 
     return (
-        <KeyboardAwareScrollView style={{flex: 1}}
-                                 contentContainerStyle={{flexGrow: 0.3, justifyContent: 'center', alignItems: 'center'}}
+        <KeyboardAwareScrollView style={{flex: 1, backgroundColor: COLORS.background}}
+                                 contentContainerStyle={{flexGrow: 0.3, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background}}
                                  enableOnAndroid={true} enabledAutomaticScroll={true}>
 
             <View style={[styles.container, {width: "100%", alignItems: 'center'}]}>

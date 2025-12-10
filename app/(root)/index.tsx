@@ -144,7 +144,7 @@ export default function Page() {
                 </View>
 
                 <KeyboardAwareScrollView
-                    style={{width: '100%'}}
+                    style={{width: '100%', backgroundColor: COLORS.background}}
                     contentContainerStyle={{
                         alignItems: 'center',
                         paddingBottom: 150

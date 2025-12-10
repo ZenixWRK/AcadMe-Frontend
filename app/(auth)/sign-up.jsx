@@ -100,10 +100,11 @@ export default function SignUpScreen() {
 
             <View style={[styles.verificationContainer]}>
 
-                <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={{
+                <KeyboardAwareScrollView style={{flex: 1, backgroundColor: COLORS.background}} contentContainerStyle={{
                     flexGrow: 0.3,
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    backgroundColor: COLORS.background
                 }} enableOnAndroid={true} enabledAutomaticScroll={true} extraScrollHeight={40}>
                     <View style={[styles.container]}>
                         <Image source={require('../../assets/images/Sign-Up-VerificationImage.png')}
