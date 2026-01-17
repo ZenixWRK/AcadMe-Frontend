@@ -7,6 +7,7 @@ import {COLORS} from '../../constants/colors.js'
 import {Ionicons} from '@expo/vector-icons'
 import {Image} from 'expo-image'
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view'
+import SafeArea from "../../assets/components/SafeArea";
 
 export default function Page() {
     const {signIn, setActive, isLoaded} = useSignIn()
@@ -65,59 +66,61 @@ export default function Page() {
     }
 
     return (
-        <KeyboardAwareScrollView style={{flex: 1, backgroundColor: COLORS.background}}
-                                 contentContainerStyle={{flexGrow: 0.3, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background}}
-                                 enableOnAndroid={true} enabledAutomaticScroll={true}>
+        <SafeArea useInset={true}>
+            <KeyboardAwareScrollView style={{flex: 1, backgroundColor: COLORS.background}}
+                                     contentContainerStyle={{flexGrow: 0.3, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background}}
+                                     enableOnAndroid={true} enabledAutomaticScroll={true}>
 
-            <View style={[styles.container, {width: "100%", alignItems: 'center'}]}>
-                <Image source={require('../../assets/images/Sign-InImage.png')}
-                       style={{width: 300, height: 300, paddingBottom: 40, marginLeft: 20, overflow: "visible"}}/>
-            </View>
+                <View style={[styles.container, {width: "100%", alignItems: 'center'}]}>
+                    <Image source={require('../../assets/images/Sign-InImage.png')}
+                           style={{width: 300, height: 300, paddingBottom: 40, marginLeft: 20, overflow: "visible"}}/>
+                </View>
 
-            <View style={[styles.container, {width: "100%", alignItems: 'center', paddingBottom: 150}]}>
-                <Text style={styles.title}>Welcome To AcadMe</Text>
+                <View style={[styles.container, {width: "100%", alignItems: 'center', paddingBottom: 150}]}>
+                    <Text style={styles.title}>Welcome To AcadMe</Text>
 
-                <Text style={[styles.title, {fontSize: 25, marginBlock: "auto", marginBottom: 20}]}>Sign In</Text>
+                    <Text style={[styles.title, {fontSize: 25, marginBlock: "auto", marginBottom: 20}]}>Sign In</Text>
 
-                {error ? (
-                    <View style={styles.errorBox}>
-                        <Ionicons name="alert-circle" size={16} color={COLORS.expense}/>
-                        <Text style={styles.errorText}>
-                            {error}
-                        </Text>
-                        <TouchableOpacity onPress={() => setError("")}>
-                            <Ionicons name="close" size={16} color={COLORS.text}/>
+                    {error ? (
+                        <View style={styles.errorBox}>
+                            <Ionicons name="alert-circle" size={16} color={COLORS.expense}/>
+                            <Text style={styles.errorText}>
+                                {error}
+                            </Text>
+                            <TouchableOpacity onPress={() => setError("")}>
+                                <Ionicons name="close" size={16} color={COLORS.text}/>
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
+
+                    <TextInput
+                        style={[styles.input, {width: '100%'}, error && styles.errorInput]}
+                        autoCapitalize="none"
+                        value={emailAddress}
+                        placeholder="Enter email"
+                        placeholderTextColor="#9b9998ff"
+                        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
+                    />
+                    <TextInput
+                        value={password}
+                        style={[styles.input, {width: '100%'}, error && styles.errorInput]}
+                        placeholder="Enter password"
+                        placeholderTextColor="#9b9998ff"
+                        secureTextEntry={true}
+                        onChangeText={(password) => setPassword(password)}
+                    />
+                    <TouchableOpacity onPress={onSignInPress} style={[styles.button, {width: '75%'}]}>
+                        <Text style={styles.buttonText}>Continue</Text>
+                    </TouchableOpacity>
+                    <View style={{display: 'flex', flexDirection: 'row', gap: 3}}>
+                        <TouchableOpacity activeOpacity={0.6} style={styles.footerContainer}
+                                          onPress={() => router.push('/(auth)/sign-up')}>
+                            <Text style={styles.footerText}>New here?</Text>
+                            <Text style={styles.linkText}>Sign up</Text>
                         </TouchableOpacity>
                     </View>
-                ) : null}
-
-                <TextInput
-                    style={[styles.input, {width: '100%'}, error && styles.errorInput]}
-                    autoCapitalize="none"
-                    value={emailAddress}
-                    placeholder="Enter email"
-                    placeholderTextColor="#9b9998ff"
-                    onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-                />
-                <TextInput
-                    value={password}
-                    style={[styles.input, {width: '100%'}, error && styles.errorInput]}
-                    placeholder="Enter password"
-                    placeholderTextColor="#9b9998ff"
-                    secureTextEntry={true}
-                    onChangeText={(password) => setPassword(password)}
-                />
-                <TouchableOpacity onPress={onSignInPress} style={[styles.button, {width: '75%'}]}>
-                    <Text style={styles.buttonText}>Continue</Text>
-                </TouchableOpacity>
-                <View style={{display: 'flex', flexDirection: 'row', gap: 3}}>
-                    <TouchableOpacity activeOpacity={0.6} style={styles.footerContainer}
-                                      onPress={() => router.push('/(auth)/sign-up')}>
-                        <Text style={styles.footerText}>New here?</Text>
-                        <Text style={styles.linkText}>Sign up</Text>
-                    </TouchableOpacity>
                 </View>
-            </View>
-        </KeyboardAwareScrollView>
+            </KeyboardAwareScrollView>
+        </SafeArea>
     )
 }

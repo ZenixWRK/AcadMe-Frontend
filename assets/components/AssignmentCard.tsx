@@ -39,6 +39,7 @@ const assignmentCard = (assignment: AssignmentType, onEdit?: (assignmentId:strin
         }
     };
 
+    // @ts-ignore
     return (
         <View
             style={{width: "100%", borderRadius: 10, borderWidth: 3.5, borderCurve: 'circular', borderColor: 'transparent', borderLeftColor: "#f4f4f4", alignSelf: 'center'}}
@@ -47,7 +48,7 @@ const assignmentCard = (assignment: AssignmentType, onEdit?: (assignmentId:strin
                 <View style={{ paddingTop: "1%", paddingLeft: 10, marginBottom: "-1%", flexDirection: 'column'}}>
                     <View style={{flexDirection: 'row'}}>
                         <Text style={{position: 'absolute', color: COLORS.text, fontSize: scaling.scale(24), alignSelf: 'flex-start', fontWeight: "700"}}>{assignment.title}</Text>
-                        <TouchableOpacity style={{left: scaling.scale(200), alignSelf: 'flex-end'}} onPress={() => onEdit(assignment.id)}>
+                        <TouchableOpacity style={{left: scaling.scale(270), alignSelf: 'flex-end'}} onPress={() => onEdit(assignment.id)}>
                             <Ionicons name="create-outline" size={scaling.scale(20)} color="black" style={{backgroundColor: 'white', borderRadius:100, borderWidth: 5, borderColor: 'white', borderStyle: 'solid'}}></Ionicons>
                         </TouchableOpacity>
                     </View>

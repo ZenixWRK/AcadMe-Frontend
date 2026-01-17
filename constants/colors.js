@@ -3,6 +3,7 @@
 const darkTheme = {
     primary: "#FFFFFF",
     background: "#121212",
+    header: "#222224",
     text: "#FFFFFF",
     border: "#333333",
     white: "#1E1E1E",

@@ -10,7 +10,7 @@ export function PageBackButton() {
 
     return (
         <View>
-
+            <Ionicons name="arrow-left" style={{color: COLORS.primary}}/>
         </View>
     );
 };
