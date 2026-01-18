@@ -18,10 +18,13 @@ export const useAssignments = (userId?: string) => {
      const [loading, setLoading] = useState(false);
      const [error, setError] = useState<string | null>(null);
 
-     const fetchAssignments = useCallback(async () => {
+     const fetchAssignments = useCallback(async (useRefresh: boolean | null) => {
          if (!userId || userId.trim() === '') return;
 
-         setLoading(true);
+         if (useRefresh || useRefresh === null) {
+             setLoading(true);
+         }
+
          setError(null);
 
          try {

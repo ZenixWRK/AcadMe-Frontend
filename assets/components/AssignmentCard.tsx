@@ -1,12 +1,15 @@
 import React from 'react'
-import { Text, View, TouchableOpacity, Animated, SectionList, ScrollView, Modal, RefreshControl } from 'react-native'
-import { styles } from '@/assets/styles/homeStyles'
+import {
+    Text,
+    View,
+    TouchableOpacity,
+    Animated,
+    StyleSheet,
+    Alert,
+    Dimensions,
+} from 'react-native'
 import { COLORS } from '@/constants/colors'
-import { Image } from 'expo-image'
-import {useFocusEffect, useRouter} from 'expo-router'
-import Svg, { Rect, Line, Path, Defs, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg'
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
-import { Ionicons } from '@expo/vector-icons'
+import Feather from '@expo/vector-icons/Feather'
 import * as scaling from 'react-native-size-matters'
 import { Assignment as AssignmentType } from '../../hooks/useAssignments'
 import * as utils from '../../lib/utils'
@@ -17,71 +20,223 @@ type AssignmentAPIType = {
     toggleCompletion?: (id: string) => Promise<any>;
 };
 
-const assignmentCard = (assignment: AssignmentType, onEdit?: (assignmentId:string) => void, AssignmentAPI: AssignmentAPIType) => {
-    const due = utils.getDueDateFromAssignment(assignment);
-    const formattedDue = utils.formatDateShort(due);
-    const days = utils.daysUntil(due);
+type Props = {
+    assignment: AssignmentType;
+    onEdit?: (assignmentId: string) => void;
+    AssignmentAPI: AssignmentAPIType;
+    onDelete?: (assignmentId: string) => void;
+};
 
-    const markComplete = async () => {
-        if (!AssignmentAPI?.updateAssignment) return;
-        try {
-            const r: any = await AssignmentAPI.updateAssignment(assignment.id, { completed: true });
-            if (!r?.success) {
-                console.error('Failed to mark assignment as complete:', r?.error ?? r);
-                return;
-            }
+const AssignmentCard: React.FC<Props> = ({ assignment, onEdit, AssignmentAPI, onDelete }) => {
+    const due = utils.getDueDateFromAssignment(assignment)
+    const formattedDue = utils.formatDateShort(due)
+    const days = utils.daysUntil(due)
 
-            if (AssignmentAPI.fetchAssignments) {
-                await AssignmentAPI.fetchAssignments();
-            }
-        } catch (err) {
-            console.error('Error marking complete:', err);
-        }
-    };
+    const appearanceEffect = React.useRef(new Animated.Value(0)).current
+    React.useEffect(() => {
+        Animated.timing(appearanceEffect, {
+            toValue: 0,
+            duration: 1,
+            useNativeDriver: true,
+        }).start()
 
-    // @ts-ignore
+        Animated.timing(appearanceEffect, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+        }).start()
+    }, [])
+
+    const slideEffect = React.useRef(new Animated.Value(0)).current
+    const windowWidth = Dimensions.get('window').width - 40
+
+    const markComplete = () => {
+        if (!AssignmentAPI?.updateAssignment) return
+
+        Alert.alert(
+            "Mark Complete",
+            "Are you sure you want to mark this complete?\nIt will delete the assignment.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Mark Complete",
+                    style: "destructive",
+                    onPress: () => {
+                        Animated.sequence([
+                            Animated.timing(slideEffect, {
+                                toValue: windowWidth,
+                                duration: 150,
+                                useNativeDriver: true,
+                            }),
+                        ]).start(({ finished }) => {
+                            if (finished) {
+                                AssignmentAPI.updateAssignment!(assignment.id, { completed: true })
+                                    .then((r: any) => {
+                                        if (!r?.success) {
+                                            console.error('Failed to mark assignment as complete:', r?.error ?? r)
+                                            slideEffect.setValue(0)
+                                            return
+                                        }
+                                        onDelete?.(assignment.id)
+                                    })
+                                    .catch((err) => {
+                                        console.error('Error marking complete:', err)
+                                        slideEffect.setValue(0)
+                                    })
+                            }
+                        })
+                    },
+                },
+            ]
+        )
+    }
+
     return (
-        <View
-            style={{width: "100%", borderRadius: 10, borderWidth: 3.5, borderCurve: 'circular', borderColor: 'transparent', borderLeftColor: "#f4f4f4", alignSelf: 'center'}}
+        <Animated.View
+            style={[
+                styles.card.container,
+                { transform: [{ translateX: slideEffect }, { scale: appearanceEffect }] }
+            ]}
         >
-            <View style={{flexDirection: 'column', gap: 10}}>
-                <View style={{ paddingTop: "1%", paddingLeft: 10, marginBottom: "-1%", flexDirection: 'column'}}>
-                    <View style={{flexDirection: 'row'}}>
-                        <Text style={{position: 'absolute', color: COLORS.text, fontSize: scaling.scale(24), alignSelf: 'flex-start', fontWeight: "700"}}>{assignment.title}</Text>
-                        <TouchableOpacity style={{left: scaling.scale(270), alignSelf: 'flex-end'}} onPress={() => onEdit(assignment.id)}>
-                            <Ionicons name="create-outline" size={scaling.scale(20)} color="black" style={{backgroundColor: 'white', borderRadius:100, borderWidth: 5, borderColor: 'white', borderStyle: 'solid'}}></Ionicons>
+            <View style={styles.card.innerColumn}>
+                <View style={styles.header.container}>
+                    <View style={styles.header.row}>
+                        <Text style={styles.header.title}>{assignment.title}</Text>
+
+                        <TouchableOpacity style={styles.header.iconButton} onPress={markComplete}>
+                            <Feather name="check-square" size={scaling.scale(20)} style={styles.header.icon} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.header.iconButton} onPress={() => onEdit?.(assignment.id)}>
+                            <Feather name="edit" size={scaling.scale(20)} style={styles.header.icon} />
                         </TouchableOpacity>
                     </View>
-                    <Text style={{top: scaling.scale(3), color: "#d8d8d8", fontSize: scaling.scale(14), fontWeight: "600"}}>{assignment.description}</Text>
-                    <View id="HorizontalLine" style={{alignSelf: 'center', marginTop: scaling.scale(10), width: "100%", height: 1, backgroundColor: "rgba(177,177,177,0.33)"}}></View>
+
+                    <Text style={styles.header.description}>{assignment.description}</Text>
+
+                    <View style={styles.dividers.horizontal} />
                 </View>
 
-                <View style={{flexDirection: 'column', height: 'auto', width: 'auto'}}>
-                    <View style={{paddingTop: "1%", justifyContent: 'space-evenly', flexDirection: 'row' }}>
-                        <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                            <Text style={{fontSize: scaling.scale(12), fontWeight: "400", color: "#d8d8d8"}}>Priority</Text>
-                            <Text style={{fontSize: scaling.scale(14), fontWeight: "600", color: COLORS.text}}>{assignment.priority}</Text>
+                <View style={styles.footer.wrapper}>
+                    <View style={styles.footer.row}>
+                        <View style={styles.footer.item}>
+                            <Text style={styles.footer.label}>Priority</Text>
+                            <Text style={styles.footer.value}>{assignment.priority}</Text>
                         </View>
-                        <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                            <Text style={{fontSize: scaling.scale(12), fontWeight: "400", color: "#d8d8d8"}}>Due Date</Text>
-                            <Text style={{fontSize: scaling.scale(14), fontWeight: "600", color: COLORS.text}}>{formattedDue || '—'}</Text>
+
+                        <View style={styles.footer.item}>
+                            <Text style={styles.footer.label}>Due Date</Text>
+                            <Text style={styles.footer.value}>{formattedDue || '—'}</Text>
                         </View>
-                        <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                            <Text style={{fontSize: scaling.scale(12), fontWeight: "400", color: "#d8d8d8"}}>Days Left</Text>
-                            <Text style={{fontSize: scaling.scale(14), fontWeight: "600", color: COLORS.text}}>{
-                                days === null ? '—' : days === 0 ? 'Today' : days > 0 ? `${days}d left` : `${Math.abs(days)}d ago`
-                            }</Text>
+
+                        <View style={styles.footer.item}>
+                            <Text style={styles.footer.label}>Days Left</Text>
+                            <Text style={styles.footer.value}>
+                                {days === null
+                                    ? '—'
+                                    : days === 0
+                                        ? 'Today'
+                                        : days > 0
+                                            ? `${days}d left`
+                                            : `${Math.abs(days)}d ago`}
+                            </Text>
                         </View>
                     </View>
-
-                    <TouchableOpacity id="CompleteButton" style={{marginTop: "9%", backgroundColor: "#ffffff", width: "80%", height: scaling.scale(40), borderRadius: 10, justifyContent: 'center', alignItems: 'center', alignSelf: 'center'}} onPress={markComplete}>
-                        <Text style={{color: "#000000", fontSize: scaling.scale(16), fontWeight: "600"}}>Mark as Complete</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
-
-        </View>
+        </Animated.View>
     )
 }
 
-export default assignmentCard;
+export default AssignmentCard
+
+const styles = StyleSheet.create({
+    card: {
+        container: {
+            width: "100%",
+            borderRadius: 10,
+            backgroundColor: '#1c1c1c',
+            borderWidth: 1,
+            borderColor: "#fff",
+            alignSelf: 'center',
+            marginBottom: scaling.scale(5),
+        },
+        innerColumn: {
+            flexDirection: 'column',
+            gap: 10,
+        },
+    },
+
+    header: {
+        container: {
+            paddingTop: "1%",
+            paddingLeft: 10,
+            marginBottom: "-1%",
+            flexDirection: 'column',
+        },
+        row: {
+            flexDirection: 'row',
+        },
+        title: {
+            position: 'absolute',
+            color: COLORS.text,
+            fontSize: scaling.scale(24),
+            alignSelf: 'flex-start',
+            fontWeight: "700",
+        },
+        iconButton: {
+            left: scaling.scale(245),
+            top: scaling.scale(3),
+            alignSelf: 'flex-end',
+        },
+        icon: {
+            color: "#fff",
+            paddingRight: 10,
+        },
+        description: {
+            top: scaling.scale(3),
+            color: "#d8d8d8",
+            fontSize: scaling.scale(14),
+            fontWeight: "600",
+        },
+    },
+
+    dividers: {
+        horizontal: {
+            alignSelf: 'center',
+            marginTop: scaling.scale(10),
+            width: "100%",
+            height: 1,
+            backgroundColor: "rgba(177,177,177,0.33)",
+        },
+    },
+
+    footer: {
+        wrapper: {
+            flexDirection: 'column',
+            height: 'auto',
+            width: 'auto',
+            marginBottom: scaling.scale(15),
+        },
+        row: {
+            paddingTop: "1%",
+            justifyContent: 'space-evenly',
+            flexDirection: 'row',
+        },
+        item: {
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        label: {
+            fontSize: scaling.scale(12),
+            fontWeight: "400",
+            color: "#d8d8d8",
+        },
+        value: {
+            fontSize: scaling.scale(14),
+            fontWeight: "600",
+            color: COLORS.text,
+        },
+    },
+})
