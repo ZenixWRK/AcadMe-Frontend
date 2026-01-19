@@ -121,7 +121,9 @@ const AssignmentCard: React.FC<Props> = ({ assignment, onEdit, AssignmentAPI, on
                     <View style={styles.footer.row}>
                         <View style={styles.footer.item}>
                             <Text style={styles.footer.label}>Priority</Text>
-                            <Text style={styles.footer.value}>{assignment.priority}</Text>
+                            <Text style={styles.footer.value}>{
+                                assignment.priority.charAt(0).toUpperCase() + assignment.priority.slice(1)
+                            }</Text>
                         </View>
 
                         <View style={styles.footer.item}>

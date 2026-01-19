@@ -4,7 +4,6 @@ export interface Assignment {
     id: string;
     title: string;
     description: string;
-    // accept both forms — frontend code sometimes uses `duedate` while backend expects `dueDate`
     duedate?: string;
     dueDate?: string;
     subject: string;
@@ -12,7 +11,6 @@ export interface Assignment {
     completed: boolean;
 }
 
-// Make userId optional so callers can pass undefined; internal guards handle missing ids.
 export const useAssignments = (userId?: string) => {
      const [assignments, setAssignments] = useState<Assignment[]>([]);
      const [loading, setLoading] = useState(false);
@@ -239,12 +237,10 @@ export const useAssignments = (userId?: string) => {
         return assignments.filter(a => a.priority === priority);
     };
     return {
-        //state
         assignments,
         loading,
         error,
 
-        //actions
         createAssignment,
         updateAssignment,
         deleteAssignment,
@@ -253,13 +249,11 @@ export const useAssignments = (userId?: string) => {
         fetchAssignments,
         getAssignmentById,
 
-        //helpers
         getCompletedAssignments,
         getPendingAssignments,
         getLateAssignments,
         getAssignmentsByPriority,
 
-        //clear error
         clearError: () => setError(null),
     };
 }

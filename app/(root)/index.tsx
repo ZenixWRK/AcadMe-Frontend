@@ -107,6 +107,7 @@ export default function Page() {
         setTimeout(() => fetchAssignments(false), 300)
     }
 
+    // @ts-ignore
     return (
         <SafeArea useInset={true}>
             <View style={styles.layout.container}>
@@ -250,8 +251,8 @@ export default function Page() {
                         modalVisible={modalVisible}
                         setModalVisible={setModalVisible}
                         selectedAssignment={selectedAssignment}
+                        API={API}
                     />
-
                 </View>
             </View>
         </SafeArea>
