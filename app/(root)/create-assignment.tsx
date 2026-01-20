@@ -21,12 +21,10 @@ import { SignOutButton } from '../../assets/components/SignOutButton'
 import { Image } from 'expo-image'
 import { useFocusEffect, useRouter } from 'expo-router'
 import Svg, { Rect } from 'react-native-svg'
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import * as scaling from 'react-native-size-matters'
 import * as utils from '../../lib/utils.js'
 import AssignmentCard from '../../assets/components/AssignmentCard'
-import EditAssignmentModal from '../../assets/components/editAssignmentModal'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import SafeArea from "../../assets/components/SafeArea"
 
@@ -37,7 +35,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function Page() {
     const { user } = useUser()
     const router = useRouter()
-    const [modalVisible, setModalVisible] = React.useState(false)
     const [refreshing, setRefreshing] = React.useState(false)
     const [selectedAssignment, setSelectedAssignment] = React.useState<AssignmentType | null>(null)
 
@@ -58,29 +55,6 @@ export default function Page() {
         assignments,
     } = API
 
-    const createRandomAssignment = async () => {
-        const priorities = ['low', 'medium', 'high']
-        const randomPriority = priorities[Math.floor(Math.random() * priorities.length)]
-        const due = new Date()
-        due.setDate(due.getDate() + Math.floor(Math.random() * 14) + 1)
-
-        const randomAssignment: Partial<AssignmentType> = {
-            title: `Random ${Math.random().toString(36).substring(2, 8)}`,
-            description: 'Auto-generated assignment',
-            priority: randomPriority as any,
-            duedate: due.toISOString(),
-            subject: 'Random',
-        }
-
-        try {
-            await createAssignment(randomAssignment as any)
-        } catch (err) {
-            console.warn('createRandomAssignment failed', err)
-        } finally {
-            await fetchAssignments(false)
-        }
-    }
-
     const onRefresh = React.useCallback(async () => {
         setRefreshing(true)
         await fetchAssignments(false)
@@ -92,20 +66,6 @@ export default function Page() {
             onRefresh()
         }, [onRefresh])
     )
-
-    const editAssignmentModal = (assignmentId: string) => {
-        setModalVisible(true)
-        const assignment = getAssignmentById(assignmentId)
-        setSelectedAssignment(assignment || null)
-    }
-
-    const handleDelete = async (assignmentId: string) => {
-        LayoutAnimation.configureNext({
-            duration: 200,
-            update: { type: LayoutAnimation.Types.easeInEaseOut }
-        })
-        setTimeout(() => fetchAssignments(false), 300)
-    }
 
     return (
         <SafeArea useInset={true}>
@@ -161,58 +121,6 @@ export default function Page() {
                         extraScrollHeight={40}
                     >
 
-                        <View style={styles.suggested.cardWrapper}>
-                            <ExpoLinearGradient
-                                colors={['#472ce8', '#2b51a3', '#a80aea']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.suggested.card}
-                            >
-                                <View style={styles.suggested.inner}>
-
-                                    <View style={styles.suggested.titleRow}>
-                                        <Ionicons name="stats-chart" size={scaling.scale(15)} color="#fff" />
-                                        <Text style={styles.suggested.title}>Suggested Focus</Text>
-
-                                        <TouchableOpacity onPress={() => editAssignmentModal('some-id')}>
-                                            <Ionicons name="create-outline" size={scaling.scale(24)} style={styles.suggested.editIcon} />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    <View style={styles.suggested.assignmentInfo}>
-                                        <Text style={styles.suggested.assignmentName}>Name Of Assignment</Text>
-                                        <Text style={styles.suggested.assignmentDescription}>
-                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                        </Text>
-                                        <View style={styles.dividers.horizontal} />
-                                    </View>
-
-                                    <View style={styles.suggested.metaSection}>
-                                        <View style={styles.suggested.metaRow}>
-                                            <View style={styles.suggested.metaItem}>
-                                                <Text style={styles.suggested.metaLabel}>Priority</Text>
-                                                <Text style={styles.suggested.metaValue}>High</Text>
-                                            </View>
-
-                                            <View style={styles.suggested.metaItem}>
-                                                <Text style={styles.suggested.metaLabel}>Due Date</Text>
-                                                <Text style={styles.suggested.metaValue}>Mon, Dec 13</Text>
-                                            </View>
-
-                                            <View style={styles.suggested.metaItem}>
-                                                <Text style={styles.suggested.metaLabel}>Days Left</Text>
-                                                <Text style={styles.suggested.metaValue}>Idkkkkkk</Text>
-                                            </View>
-                                        </View>
-
-                                        <TouchableOpacity style={styles.suggested.completeButton}>
-                                            <Text style={styles.suggested.completeButtonText}>Mark as Complete</Text>
-                                        </TouchableOpacity>
-                                    </View>
-
-                                </View>
-                            </ExpoLinearGradient>
-
                             <View style={styles.dividers.horizontal} />
 
                             <View style={styles.upcoming.headerWrapper}>
@@ -221,37 +129,8 @@ export default function Page() {
                                 </View>
                             </View>
 
-                            {getPendingAssignments()
-                                .sort((a, b) => {
-                                    const dateA = utils.getDueDateFromAssignment(a)
-                                    const dateB = utils.getDueDateFromAssignment(b)
-                                    const timeA = dateA ? new Date(dateA).getTime() : null
-                                    const timeB = dateB ? new Date(dateB).getTime() : null
-
-                                    if (timeA && timeB) return timeA - timeB
-                                    if (timeA && !timeB) return -1
-                                    if (!timeA && timeB) return 1
-                                    return 0
-                                })
-                                .map((assignment) => (
-                                    <AssignmentCard
-                                        key={assignment.id}
-                                        assignment={assignment}
-                                        onEdit={editAssignmentModal}
-                                        AssignmentAPI={API}
-                                        onDelete={handleDelete}
-                                    />
-                                ))}
-
                         </View>
                     </KeyboardAwareScrollView>
-
-                    <EditAssignmentModal
-                        modalVisible={modalVisible}
-                        setModalVisible={setModalVisible}
-                        selectedAssignment={selectedAssignment}
-                        API={API}
-                    />
                 </View>
             </View>
         </SafeArea>

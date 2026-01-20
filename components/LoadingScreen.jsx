@@ -1,6 +1,5 @@
 import {View, ActivityIndicator, StyleSheet} from 'react-native';
 import React from 'react';
-import {styles} from '../assets/styles/createStyles.js';
 import {COLORS} from '../constants/colors.js';
 
 export default function LoadingScreen() {
@@ -10,3 +9,12 @@ export default function LoadingScreen() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.background,
+    }
+});
