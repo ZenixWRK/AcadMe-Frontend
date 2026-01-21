@@ -12,7 +12,7 @@ import {
     StyleSheet,
     Platform,
     UIManager,
-    LayoutAnimation
+    LayoutAnimation, Alert
 } from 'react-native'
 import { useAssignments, Assignment as AssignmentType } from '../../hooks/useAssignments'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -29,6 +29,7 @@ import AssignmentCard from '../../assets/components/AssignmentCard'
 import EditAssignmentModal from '../../assets/components/editAssignmentModal'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import SafeArea from "../../assets/components/SafeArea"
+import {error} from "@expo/fingerprint/cli/build/utils/log";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -40,6 +41,7 @@ export default function Page() {
     const [modalVisible, setModalVisible] = React.useState(false)
     const [refreshing, setRefreshing] = React.useState(false)
     const [selectedAssignment, setSelectedAssignment] = React.useState<AssignmentType | null>(null)
+    const [focusAssignment, setFocusAssignment] = React.useState<AssignmentType | null>(null)
 
     const API = useAssignments(user?.id)
     const {
@@ -55,31 +57,13 @@ export default function Page() {
         getLateAssignments,
         getAssignmentsByPriority,
         getAssignmentById,
+
+        requestNotificationPermissions,
+        testNotification,
+        getSuggestedFocus,
+
         assignments,
     } = API
-
-    const createRandomAssignment = async () => {
-        const priorities = ['low', 'medium', 'high']
-        const randomPriority = priorities[Math.floor(Math.random() * priorities.length)]
-        const due = new Date()
-        due.setDate(due.getDate() + Math.floor(Math.random() * 14) + 1)
-
-        const randomAssignment: Partial<AssignmentType> = {
-            title: `Random ${Math.random().toString(36).substring(2, 8)}`,
-            description: 'Auto-generated assignment',
-            priority: randomPriority as any,
-            duedate: due.toISOString(),
-            subject: 'Random',
-        }
-
-        try {
-            await createAssignment(randomAssignment as any)
-        } catch (err) {
-            console.warn('createRandomAssignment failed', err)
-        } finally {
-            await fetchAssignments(false)
-        }
-    }
 
     const onRefresh = React.useCallback(async () => {
         setRefreshing(true)
@@ -107,6 +91,115 @@ export default function Page() {
         setTimeout(() => fetchAssignments(false), 300)
     }
 
+    const getFocusedAssignment = async () => {
+        // Keyword List Made By Claude Sonnet 4.5
+        const ASSIGNMENT_KEYWORDS = [
+            'urgent', 'asap', 'immediately', 'rush', 'emergency', 'critical',
+            'deadline', 'overdue', 'late', 'time-sensitive', 'important',
+            'significant', 'major', 'priority', 'crucial',
+
+            'exam', 'test', 'quiz', 'midterm', 'final', 'finals',
+            'project', 'presentation', 'thesis', 'dissertation',
+            'capstone', 'portfolio', 'defense',
+
+            'essay', 'paper', 'report', 'research', 'study',
+            'analysis', 'review', 'critique', 'proposal',
+            'lab', 'experiment', 'case study', 'homework',
+            'assignment', 'worksheet', 'problem set',
+
+            'grade', 'graded', 'worth', 'weighted', 'counts',
+            'percent', '%', 'points', 'credit', 'extra credit',
+
+            'group', 'team', 'partner', 'collaborative', 'peer',
+            'meeting', 'discussion', 'solo', 'individual',
+
+            'submit', 'turn in', 'upload', 'hand in', 'deliver',
+            'due', 'by', 'before', 'send',
+
+            'math', 'calculus', 'algebra', 'geometry', 'statistics',
+            'physics', 'chemistry', 'biology', 'equation', 'formula',
+            'calculate', 'solve', 'prove',
+
+            'english', 'literature', 'reading', 'writing',
+            'history', 'historical', 'analysis', 'argument',
+
+            'code', 'programming', 'algorithm', 'debug', 'software',
+            'function', 'class', 'database', 'API',
+
+            'hard', 'difficult', 'challenging', 'complex', 'advanced',
+            'easy', 'simple', 'basic', 'intro', 'beginner',
+
+            'long', 'short', 'quick', 'hours', 'days', 'weeks',
+            'extensive', 'brief', 'lengthy', 'tonight', 'tomorrow',
+            'today', 'weekend',
+
+            'read', 'write', 'study', 'review', 'practice',
+            'complete', 'finish', 'solve', 'analyze',
+            'research', 'investigate', 'create', 'design',
+            'memorize', 'summarize', 'outline', 'draft',
+            'revise', 'edit', 'proofread',
+
+            'textbook', 'article', 'book', 'chapter', 'page',
+            'video', 'lecture', 'notes', 'slides', 'handout',
+            'online', 'library', 'source', 'reference',
+
+            'draft', 'rough', 'outline', 'final', 'revision',
+            'polish', 'first', 'second', 'third',
+
+            'optional', 'required', 'mandatory', 'bonus',
+            'redo', 'retake', 'makeup', 'late submission'
+        ];
+        const result = await getSuggestedFocus(ASSIGNMENT_KEYWORDS);
+
+        if (result.success) {
+            setFocusAssignment(result.data.keyFocus);
+        }
+    }
+
+    const markComplete = () => {
+        if (!focusAssignment) {
+            Alert.alert("No Assignment", "No assignment is currently focused.", [{ text: "OK" }]);
+            return;
+        }
+
+        Alert.alert(
+            "Mark Complete",
+            "Are you sure you want to mark this complete?\nIt will delete the assignment.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Mark Complete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            console.log('Attempting to update assignment:', focusAssignment.id);
+                            const result = await updateAssignment(focusAssignment.id, { completed: true });
+                            console.log('Update result:', result);
+
+                            await fetchAssignments(true); // force refresh
+                            setFocusAssignment(null);
+
+                        } catch (err) {
+                            console.error('Error marking complete:', err);
+                            Alert.alert("Error", "Failed to mark assignment as complete.");
+                        }
+                    },
+                },
+            ]
+        );
+    }
+
+
+
+
+    React.useEffect(() => {
+        requestNotificationPermissions()
+    }, []);
+
+    React.useEffect(() => {
+        getFocusedAssignment()
+    }, [assignments])
+
     return (
         <SafeArea useInset={true}>
             <View style={styles.layout.container}>
@@ -133,18 +226,18 @@ export default function Page() {
                         <View style={styles.header.right}>
                             <TouchableOpacity
                                 style={styles.header.addButton}
+                                onPress={testNotification}
+                            >
+                                <Ionicons name="add-circle" size={15} color="#000" />
+                                <Text style={styles.header.addButtonText}>Test Notif</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.header.addButton}
                                 onPress={() => router.push("/create-assignment" as any)}
                             >
                                 <Ionicons name="add-circle" size={15} color="#000" />
                                 <Text style={styles.header.addButtonText}>Add</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.header.randomButton}
-                                onPress={createRandomAssignment}
-                            >
-                                <Ionicons name="shuffle" size={15} color="#000" />
-                                <Text style={styles.header.randomButtonText}>Random</Text>
                             </TouchableOpacity>
 
                             <SignOutButton />
@@ -174,15 +267,15 @@ export default function Page() {
                                         <Ionicons name="stats-chart" size={scaling.scale(15)} color="#fff" />
                                         <Text style={styles.suggested.title}>Suggested Focus</Text>
 
-                                        <TouchableOpacity onPress={() => editAssignmentModal('some-id')}>
+                                        <TouchableOpacity onPress={() => editAssignmentModal(focusAssignment ? focusAssignment.id : "")}>
                                             <Ionicons name="create-outline" size={scaling.scale(24)} style={styles.suggested.editIcon} />
                                         </TouchableOpacity>
                                     </View>
 
                                     <View style={styles.suggested.assignmentInfo}>
-                                        <Text style={styles.suggested.assignmentName}>Name Of Assignment</Text>
+                                        <Text style={styles.suggested.assignmentName}>{focusAssignment?.title || "No Title Available"}</Text>
                                         <Text style={styles.suggested.assignmentDescription}>
-                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                            {focusAssignment?.description || "No description available."}
                                         </Text>
                                         <View style={styles.dividers.horizontal} />
                                     </View>
@@ -191,23 +284,30 @@ export default function Page() {
                                         <View style={styles.suggested.metaRow}>
                                             <View style={styles.suggested.metaItem}>
                                                 <Text style={styles.suggested.metaLabel}>Priority</Text>
-                                                <Text style={styles.suggested.metaValue}>High</Text>
+                                                <Text style={styles.suggested.metaValue}>
+                                                    {focusAssignment?.priority
+                                                        ? focusAssignment.priority.charAt(0).toUpperCase() + focusAssignment.priority.slice(1)
+                                                        : "None"}
+                                                </Text>
+
                                             </View>
 
                                             <View style={styles.suggested.metaItem}>
                                                 <Text style={styles.suggested.metaLabel}>Due Date</Text>
-                                                <Text style={styles.suggested.metaValue}>Mon, Dec 13</Text>
+                                                <Text style={styles.suggested.metaValue}>{utils.formatDateShort(utils.getDueDateFromAssignment(focusAssignment)) || "None"}</Text>
                                             </View>
 
                                             <View style={styles.suggested.metaItem}>
                                                 <Text style={styles.suggested.metaLabel}>Days Left</Text>
-                                                <Text style={styles.suggested.metaValue}>Idkkkkkk</Text>
+                                                <Text style={styles.suggested.metaValue}>{utils.daysUntil(utils.getDueDateFromAssignment(focusAssignment)) || "None"}</Text>
                                             </View>
                                         </View>
 
-                                        <TouchableOpacity style={styles.suggested.completeButton}>
-                                            <Text style={styles.suggested.completeButtonText}>Mark as Complete</Text>
-                                        </TouchableOpacity>
+                                        {focusAssignment && (
+                                            <TouchableOpacity style={styles.suggested.completeButton} onPress={markComplete}>
+                                                <Text style={styles.suggested.completeButtonText}>Mark as Complete</Text>
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
 
                                 </View>
@@ -363,7 +463,7 @@ const styles = StyleSheet.create({
             alignItems: 'center',
         },
         card: {
-            height: scaling.scale(250),
+            height: "auto",
             width: "100%",
             borderRadius: 10,
             borderColor: "white",
@@ -437,7 +537,8 @@ const styles = StyleSheet.create({
             marginTop: "6%",
             backgroundColor: "#ffffff",
             width: "80%",
-            height: "30%",
+            height: scaling.scale(50),
+            marginBottom: scaling.scale(20),
             borderRadius: 10,
             justifyContent: 'center',
             alignItems: 'center',

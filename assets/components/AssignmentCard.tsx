@@ -173,34 +173,34 @@ const styles = StyleSheet.create({
         container: {
             paddingTop: "1%",
             paddingLeft: 10,
+            paddingRight: 10,
             marginBottom: "-1%",
             flexDirection: 'column',
         },
         row: {
             flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
         },
         title: {
-            position: 'absolute',
+            flex: 1,
             color: COLORS.text,
             fontSize: scaling.scale(24),
-            alignSelf: 'flex-start',
             fontWeight: "700",
+            flexWrap: 'wrap',
         },
         iconButton: {
-            left: scaling.scale(245),
-            top: scaling.scale(3),
-            alignSelf: 'flex-end',
+            paddingLeft: 10,
+            paddingTop: scaling.scale(3),
         },
         icon: {
             color: "#fff",
-            paddingRight: 10,
         },
         description: {
-            top: scaling.scale(3),
+            marginTop: scaling.scale(8),
             color: "#d8d8d8",
             fontSize: scaling.scale(14),
-            fontWeight: "600",
-        },
+            fontWeight: "600",},
     },
 
     dividers: {

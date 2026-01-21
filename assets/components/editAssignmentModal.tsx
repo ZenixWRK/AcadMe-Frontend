@@ -84,10 +84,9 @@ const EditAssignmentModal: React.FC<Props> = ({selectedAssignment, modalVisible,
             description: description || olddescription,
             priority: (valuePicker as 'low' | 'medium' | 'high') || oldPriority,
         })
-            .then(() => {
-                API.fetchAssignments?.(false);
-                setModalVisible(false);
-            });
+
+        API.fetchAssignments?.(false);
+        setModalVisible(false);
     };
 
     React.useEffect(() => {
