@@ -13,10 +13,9 @@ export interface Assignment {
 }
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert: true,
+        shouldShowBanner: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
-        shouldShowBanner: true,
         shouldShowList: true,
     }),
 });
@@ -296,16 +295,16 @@ export const useAssignments = (userId?: string) => {
 
     const testNotification = async () => {
         const now = new Date();
-        const testTime = new Date(now.getTime() + 10 * 1000); // 10 seconds from now
+        const testTime = new Date(now.getTime() + 2 * 1000); // 10 seconds from now
 
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Test Notification!",
-                body: "This fired 10 seconds after scheduling",
+                body: "This fired 2 seconds after scheduling",
             },
             trigger: {
                 type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-                seconds: 10,
+                seconds: 2,
             },
             identifier: 'test-123',
         });
