@@ -92,7 +92,6 @@ export default function Page() {
             setValuePicker(null)
             setShowDatePicker(false)
 
-            Alert.alert('Success', 'Assignment created successfully')
             router.push('/' as any)
         } catch (error) {
             Alert.alert('Error', 'Failed to create assignment')

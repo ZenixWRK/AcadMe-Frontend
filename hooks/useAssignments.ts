@@ -356,7 +356,7 @@ export const useAssignments = (userId?: string) => {
             );
 
             if (!response.ok) {
-                throw new Error(`Failed to get key focus: ${response.status}`);
+
             }
 
             const data = await response.json();

@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
             alignItems: "center",
             marginTop: 10,
             marginBottom: 20,
-            width: "75%",
+            width: "90%",
         },
         text: {
             color: COLORS.white,

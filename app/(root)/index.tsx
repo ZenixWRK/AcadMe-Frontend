@@ -281,7 +281,7 @@ export default function Page() {
                                     </View>
 
                                     <View style={styles.suggested.metaSection}>
-                                        <View style={styles.suggested.metaRow}>
+                                        <View style={{...styles.suggested.metaRow, marginBottom: focusAssignment ? 0 : scaling.scale(20)}}>
                                             <View style={styles.suggested.metaItem}>
                                                 <Text style={styles.suggested.metaLabel}>Priority</Text>
                                                 <Text style={styles.suggested.metaValue}>
